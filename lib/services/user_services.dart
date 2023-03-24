@@ -1,6 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:todo_sqflite/database/todo_database.dart';
+import 'package:todo_sqflite/models/user_model.dart';
 
-class UserService with ChangeNotifier {}
+class UserService with ChangeNotifier {
+  late User _currentUser;
+  bool _busyCreate = false;
+  bool _userExists = false;
+
+  User get currentUser => _currentUser;
+  bool get busyCreate => _busyCreate;
+  bool get userExists => _userExists;
+
+  set userExists(bool bool) {
+    _userExists = bool;
+  }
+
+  Future<String> getUser(String username) async {
+    String result = 'OK';
+
+    try {
+      _currentUser = await TodoDatabase.instance.getUser(username);
+      notifyListeners();
+    } catch (e) {
+      result = getHumanReadableError(e.toString());
+    }
+    return result;
+  }
+
+  Future<String> checkUserExists(String username) async {
+    String result = 'OK';
+    try {
+      await TodoDatabase.instance.getUser(username);
+    } catch (e) {
+      result = getHumanReadableError(e.toString());
+    }
+    return result;
+  }
+
+  Future<String> updateCurrentUer(String name) async {
+    String result = 'OK';
+    _currentUser.name = name;
+    notifyListeners();
+    try {
+      await TodoDatabase.instance.updateUser(_currentUser);
+    } catch (e) {
+      result = getHumanReadableError(e.toString());
+    }
+    return result;
+  }
+
+  Future<String> createUser(User user) async {
+    String result = 'OK';
+    _busyCreate = true;
+    notifyListeners();
+    try {
+      await TodoDatabase.instance.createUser(user);
+      await Future.delayed(Duration(seconds: 3));
+
+    } catch (e) {
+      result = getHumanReadableError(e.toString());
+    }
+    _busyCreate = false;
+    notifyListeners();
+    return result;
+  }
+}
 
 String getHumanReadableError(String message) {
   if (message.contains('UNIQUE constraint failed')) {
