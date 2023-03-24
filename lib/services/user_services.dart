@@ -64,6 +64,7 @@ class UserService with ChangeNotifier {
     notifyListeners();
     return result;
   }
+  
 }
 
 String getHumanReadableError(String message) {
