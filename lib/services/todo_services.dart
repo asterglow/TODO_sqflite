@@ -8,7 +8,7 @@ class TodoServices with ChangeNotifier {
 
   List<Todo> get todos => _todos;
 
-  Future<String> getTodos(String username) async {
+  Future<String> getAllTodos(String username) async {
     try {
       _todos = await TodoDatabase.instance.getAllTodos(username);
       notifyListeners();
@@ -24,7 +24,7 @@ class TodoServices with ChangeNotifier {
     } catch (e) {
       return e.toString();
     }
-    String result = await getTodos(todo.username);
+    String result = await getAllTodos(todo.username);
     return result;
   }
 
@@ -34,7 +34,7 @@ class TodoServices with ChangeNotifier {
     } catch (e) {
       return e.toString();
     }
-    String result = await getTodos(todo.username);
+    String result = await getAllTodos(todo.username);
     return result;
   }
 
@@ -44,7 +44,7 @@ class TodoServices with ChangeNotifier {
     } catch (e) {
       return e.toString();
     }
-    String result = await getTodos(todo.username);
+    String result = await getAllTodos(todo.username);
     return result;
   }
   

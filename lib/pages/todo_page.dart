@@ -2,8 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_sqflite/services/todo_services.dart';
+import 'package:todo_sqflite/services/user_services.dart';
+import 'package:todo_sqflite/widgets/dialogs.dart';
 
 import '../models/todo_model.dart';
+import '../models/user_model.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({Key? key}) : super(key: key);
@@ -76,7 +81,41 @@ class _TodoPageState extends State<TodoPage> {
                                 ),
                                 TextButton(
                                   child: Text('Save'),
-                                  onPressed: () async {},
+                                  onPressed: () async {
+                                    if (todoController.text.isEmpty) {
+                                      showSnackBar(context,
+                                          'Please enter a Todo to save');
+                                    } else {
+                                      String username = await context
+                                          .read<UserServices>()
+                                          .currentUser
+                                          .username;
+                                      Todo todo = Todo(
+                                        username: username,
+                                        title: todoController.text.trim(),
+                                        created: DateTime.now(),
+                                      );
+                                      if (context
+                                          .read<TodoServices>()
+                                          .todos
+                                          .contains(todo)) {
+                                        showSnackBar(context,
+                                            'This Todo already exists');
+                                      } else {
+                                        String result = await context
+                                            .read<TodoServices>()
+                                            .createTodo(todo);
+                                        if (result == 'OK') {
+                                          showSnackBar(
+                                              context, 'New Todo added');
+                                          todoController.text = '';
+                                        } else {
+                                          showSnackBar(context, result);
+                                        }
+                                        Navigator.pop(context);
+                                      }
+                                    }
+                                  },
                                 ),
                               ],
                             );
@@ -99,17 +138,22 @@ class _TodoPageState extends State<TodoPage> {
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Aster\'s Todo list',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 46,
-                    fontWeight: FontWeight.w200,
-                    color: Colors.white,
-                  ),
+                child: Selector<UserServices, User>(
+                  selector: (context, value) => value.currentUser,
+                  builder: (context, value, child) {
+                    return Text(
+                      '${value.username}\'s Todo list',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 46,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
                 ),
               ),
-               Padding(
+              Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '>>>>>> Slide to delete Todo',
@@ -125,14 +169,13 @@ class _TodoPageState extends State<TodoPage> {
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8.0, vertical: 20),
-                  child: ListView.builder(
-                    itemCount: 4,
-                    itemBuilder: (context, index) {
-                      return TodoCard(
-                        todo: Todo(
-                            username: 'sarthak',
-                            title: 'RiverPod',
-                            created: DateTime.now()),
+                  child: Consumer<TodoServices>(
+                    builder: (context, value, child) {
+                      return ListView.builder(
+                        itemCount: value.todos.length,
+                        itemBuilder: (context, index) {
+                          return TodoCard(todo: value.todos[index]);
+                        },
                       );
                     },
                   ),
@@ -162,10 +205,19 @@ class TodoCard extends StatelessWidget {
         startActionPane: ActionPane(
           motion: ScrollMotion(),
           children: [
-            SlidableAction(onPressed:(context) {
-              
-            },icon: Icons.delete,
-            backgroundColor: Colors.deepPurple,)
+            SlidableAction(
+              onPressed: (context) async {
+                String result =
+                    await context.read<TodoServices>().deleteTodo(todo);
+                if (result == 'OK') {
+                  showSnackBar(context, 'Deleted Todo');
+                } else {
+                  showSnackBar(context, result);
+                }
+              },
+              icon: Icons.delete,
+              backgroundColor: Colors.deepPurple,
+            )
           ],
         ),
         // secondaryActions: [
@@ -180,7 +232,13 @@ class TodoCard extends StatelessWidget {
           checkColor: Colors.purple,
           activeColor: Colors.purple[100],
           value: todo.done,
-          onChanged: (value) async {},
+          onChanged: (value) async {
+            String result =
+                await context.read<TodoServices>().toggleTodoDone(todo);
+            if (result != 'OK') {
+              showSnackBar(context, result);
+            }
+          },
           subtitle: Text(
             '${todo.created.day}/${todo.created.month}/${todo.created.year}',
             style: TextStyle(color: Colors.white, fontSize: 10),
@@ -189,7 +247,8 @@ class TodoCard extends StatelessWidget {
             todo.title,
             style: TextStyle(
               color: Colors.white,
-              decoration: TextDecoration.none,
+              decoration:
+                  todo.done ? TextDecoration.lineThrough : TextDecoration.none,
             ),
           ),
         ),

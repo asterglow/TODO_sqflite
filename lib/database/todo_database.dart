@@ -1,5 +1,6 @@
+// ignore_for_file: prefer_const_declarations
+
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite/sqlite_api.dart';
 import 'package:todo_sqflite/models/todo_model.dart';
 import '../models/user_model.dart';
 import 'package:path/path.dart';
@@ -10,7 +11,7 @@ class TodoDatabase {
   TodoDatabase._initialise();
 
   Future _createDB(Database db, int version) async {
-    final userUsernameType = 'TEXT PRIMARY NOT NULL';
+    final userUsernameType = 'TEXT PRIMARY KEY NOT NULL';
     final textType = 'TEXT NOT NULL';
     final boolType = 'BOOLEAN NOT NULL';
 

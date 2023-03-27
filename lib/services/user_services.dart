@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:todo_sqflite/database/todo_database.dart';
 import 'package:todo_sqflite/models/user_model.dart';
 
-class UserService with ChangeNotifier {
+class UserServices with ChangeNotifier {
   late User _currentUser;
   bool _busyCreate = false;
   bool _userExists = false;
@@ -64,7 +64,7 @@ class UserService with ChangeNotifier {
     notifyListeners();
     return result;
   }
-  
+
 }
 
 String getHumanReadableError(String message) {

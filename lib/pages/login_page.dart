@@ -1,6 +1,10 @@
 // ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_sqflite/services/todo_services.dart';
+import 'package:todo_sqflite/services/user_services.dart';
+import 'package:todo_sqflite/widgets/dialogs.dart';
 
 import '../routes/routes.dart';
 import '../widgets/app_textfield.dart';
@@ -61,7 +65,21 @@ class _LoginState extends State<Login> {
                   padding: const EdgeInsets.only(top: 12.0),
                   child: ElevatedButton(
                     onPressed: () async {
-                      Navigator.of(context).pushNamed(RouteManager.todoPage);
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      if (usernameController.text.isEmpty) {
+                        showSnackBar(context, 'Please enter your Username');
+                      } else {
+                        String result = await context
+                            .read<UserServices>()
+                            .getUser(usernameController.text.trim());
+                            if (result !='OK'){
+                              showSnackBar(context, result);
+                            } else {
+                              String username = context.read<UserServices>().currentUser.username ;
+                              context.read<TodoServices>().getAllTodos(username);
+                              Navigator.of(context).pushNamed(RouteManager.todoPage);
+                            }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,
